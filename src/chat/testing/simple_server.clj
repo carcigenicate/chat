@@ -1,9 +1,12 @@
 (ns chat.testing.simple-server
   (:require [helpers.net-helpers :as nh]
             [clojure.core.async :refer [>! <! thread go-loop chan]]
-            [chat.testing.helpers :as ch])
+            #_
+            [chat.testing.helpers :as ch]
+            [chat.buffered-socket :as bs])
 
-  (:import [java.net Socket SocketException]))
+  (:import [java.net Socket SocketException]
+           [chat.buffered_socket BufferedSocket]))
 
 ; TODO: Can recieve connections from clients, and recieve their names.
 ; TODO: Test if Broadcasting and message listening is working
@@ -22,27 +25,26 @@
   {:sender sender-name
    :text message-text})
 
-(defn add-user! [^String username ^Socket socket]
-  (q "Recieved a connection to" username "from" (nh/pretty-address socket) "\n")
-  (swap! users! #(assoc % username socket)))
+(defn add-user! [^String username ^BufferedSocket b-sock]
+  (q "Recieved a connection to" username "from" (nh/pretty-address (:socket b-sock)) "\n")
+  (swap! users! #(assoc % username b-sock)))
 
-(defn remove-connection! [^String username ^Socket socket]
+(defn remove-connection! [^String username ^BufferedSocket b-sock]
   (swap! users! #(dissoc % username))
-  (.close socket))
+  (bs/close b-sock))
 
 (defn disconnect-all! []
-  (let [close-all! #(doseq [s %] (.close s))]
+  (let [close-all! #(doseq [s %] (bs/close s))]
     (swap! users!
            (fn [us]
              (close-all! us)
              {}))))
 
 (defn broadcast [message]
-  (q "Broadcasting" message "\n")
-
   (doseq [[u-name c-sock] @users!]
     (try
-      (nh/write c-sock message)
+      (q "Sending to" u-name "-" message)
+      (bs/write c-sock message)
 
       (catch SocketException se
         (do
@@ -54,8 +56,9 @@
     (broadcast msg)))
 
 (defn accept-handler [^Socket client]
-  (let [username (nh/read-line client)]
-    (add-user! username client)))
+  (let [b-sock (bs/new-buffered-socket client)
+        username (bs/read-line b-sock)]
+    (add-user! username b-sock)))
 
 (defn shutdown-server! [^Socket server-sock]
   (reset! running?! false)
@@ -67,8 +70,8 @@
 
 (defn check-users-for-messages []
   (reduce (fn [msgs [u-name c-sock]]
-            (if (ch/messages-to-recieve? c-sock)
-              (let [raw-msgs (ch/read-lines c-sock)]
+            (if (bs/data-ready? c-sock)
+              (let [raw-msgs (bs/read-lines c-sock)]
                 (q "Raw messages:" raw-msgs "\n")
                 (into msgs (to-messages u-name raw-msgs)))
               msgs))
@@ -79,6 +82,7 @@
   (thread
     (loop []
       (when @running?!
+        (q "Checking...")
         (let [msgs (check-users-for-messages)]
           (broadcast-many msgs))
 

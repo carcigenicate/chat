@@ -4,7 +4,8 @@
             [chat.testing.simple-server :as ss]
             [chat.testing.helpers :as ch]
 
-            [clojure.core.async :refer [thread chan]])
+      [clojure.core.async :refer [thread chan]]
+      [chat.buffered-socket :as bs])
 
   (:import [java.net Socket SocketException]))
 
@@ -24,27 +25,29 @@
 
 (defn connection-handler [server]
   (ch/print-fl "Name?: ")
-  (let [entered-name (read-line)
-        user (new-user server entered-name)
+  (let [b-sock (bs/new-buffered-socket server)
+        entered-name (read-line)
+        user (new-user b-sock entered-name)
         {:keys [server-sock running?! username]} user]
 
-    (nh/write server-sock username)
+    (bs/write server-sock username)
 
     (try
       (while @running?!
         (let [sending-msg (ask-for-message)]
 
           (when (> (count sending-msg) 1)
-             (nh/write server-sock sending-msg))
+             (bs/write server-sock sending-msg))
 
-          (when-let [recieved (ch/read-lines server-sock)]
-              (println recieved))))
+          (when-let [recieved (bs/read-lines server-sock)]
+            (doseq [msg recieved]
+              (println "\t" msg)))))
 
       (catch SocketException se
         (println "Exception:" (.getMessage se) "\nClosing..."))
 
       (finally
-        (.close server-sock)))))
+        (bs/close server-sock)))))
 
 (defn connect [address port]
   (nh/connect-to address port connection-handler))
