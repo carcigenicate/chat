@@ -6,7 +6,7 @@
 
             [clojure.core.async :refer [thread chan]])
 
-  (:import [java.net Socket]))
+  (:import [java.net Socket SocketException]))
 
 (def test-address "localhost")
 (def test-port ss/test-port)
@@ -24,6 +24,10 @@
       (recur (str acc (nh/read-line server-sock) "\n"))
       acc)))
 
+(defn ask-for-message []
+  (ch/print-fl ">: ")
+  (read-line))
+
 (defn connection-handler [server]
   (ch/print-fl "Name?: ")
   (let [entered-name (read-line)
@@ -32,13 +36,21 @@
 
     (nh/write server-sock username)
 
-    (while @running?!
-      (let [sending-msg (read-line)]
-        (when-not (empty? sending-msg)
-           (nh/write server-sock sending-msg))
+    (try
+      (while @running?!
+        (let [sending-msg (ask-for-message)]
 
-        (when-let [recieved (recieve-messages server-sock)]
-            (ss/q recieved))))))
+          (when (> (count sending-msg) 1)
+             (nh/write server-sock sending-msg))
+
+          (when-let [recieved (recieve-messages server-sock)]
+              (println recieved))))
+
+      (catch SocketException se
+        (println "Exception:" (.getMessage se) "\nClosing..."))
+
+      (finally
+        (.close server-sock)))))
 
 (defn connect [address port]
   (nh/connect-to address port connection-handler))

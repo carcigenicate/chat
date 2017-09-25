@@ -46,7 +46,7 @@
 
       (catch SocketException se
         (do
-          (q "Exception" (.getMessage se))
+          (q "Exception for" u-name "-" (.getMessage se))
           (remove-connection! u-name c-sock))))))
 
 (defn broadcast-many [messages]
@@ -59,14 +59,17 @@
 
 (defn shutdown-server! [^Socket server-sock]
   (reset! running?! false)
-  (disconnect-all!)`
+  (disconnect-all!)
   (.close server-sock))
+
+(defn to-messages [username raw-messages]
+  (mapv (partial new-message username) raw-messages))
 
 (defn check-users-for-messages []
   (reduce (fn [msgs [u-name c-sock]]
             (if (ch/messages-to-recieve? c-sock)
-              (let [msg (nh/read-line c-sock)]
-                (conj msgs (new-message u-name msg)))
+              (let [raw-msgs (ch/read-lines c-sock)]
+                (into msgs (to-messages u-name raw-msgs)))
               msgs))
           []
           @users!))
@@ -83,7 +86,7 @@
 
 (defn start-server [port check-delay]
   (start-message-listener check-delay)
-  (println "Broadcasting. Starting server...")
+  (println "Starting server...")
 
   (nh/start-async-server port accept-handler
     #(do
