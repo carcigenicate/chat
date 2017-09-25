@@ -18,12 +18,6 @@
 (defn new-user [server-sock username]
   (->User server-sock username (atom true)))
 
-(defn recieve-messages [server-sock]
-  (loop [acc nil]
-    (if (ch/messages-to-recieve? server-sock)
-      (recur (str acc (nh/read-line server-sock) "\n"))
-      acc)))
-
 (defn ask-for-message []
   (ch/print-fl ">: ")
   (read-line))
@@ -43,7 +37,7 @@
           (when (> (count sending-msg) 1)
              (nh/write server-sock sending-msg))
 
-          (when-let [recieved (recieve-messages server-sock)]
+          (when-let [recieved (ch/read-lines server-sock)]
               (println recieved))))
 
       (catch SocketException se

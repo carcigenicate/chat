@@ -23,7 +23,7 @@
    :text message-text})
 
 (defn add-user! [^String username ^Socket socket]
-  (q "Recieved a connection to" username "from" (nh/pretty-address socket))
+  (q "Recieved a connection to" username "from" (nh/pretty-address socket) "\n")
   (swap! users! #(assoc % username socket)))
 
 (defn remove-connection! [^String username ^Socket socket]
@@ -38,7 +38,7 @@
              {}))))
 
 (defn broadcast [message]
-  (q "Broadcasting" message)
+  (q "Broadcasting" message "\n")
 
   (doseq [[u-name c-sock] @users!]
     (try
@@ -69,6 +69,7 @@
   (reduce (fn [msgs [u-name c-sock]]
             (if (ch/messages-to-recieve? c-sock)
               (let [raw-msgs (ch/read-lines c-sock)]
+                (q "Raw messages:" raw-msgs "\n")
                 (into msgs (to-messages u-name raw-msgs)))
               msgs))
           []
