@@ -1,11 +1,12 @@
 (ns chat.testing.simple-client
-  (:require [helpers.net-helpers :as nh]
+  (:require [helpers.net.helpers :as nh]
+            [helpers.net.buffered-socket :as bs]
 
             [chat.testing.simple-server :as ss]
             [chat.testing.helpers :as ch]
 
-      [clojure.core.async :refer [thread chan]]
-      [chat.buffered-socket :as bs])
+            [clojure.core.async :refer [thread chan]]
+            [chat.message :as m])
 
   (:import [java.net Socket SocketException]))
 
@@ -22,6 +23,10 @@
 (defn ask-for-message []
   (ch/print-fl ">: ")
   (read-line))
+
+(defn parse-format-message [raw-message]
+  (let [{:keys [sender text]} (m/parse-message raw-message)]
+    (str sender ": " text)))
 
 (defn connection-handler [server]
   (ch/print-fl "Name?: ")
@@ -41,7 +46,7 @@
 
           (when-let [recieved (bs/read-lines server-sock)]
             (doseq [msg recieved]
-              (println "\t" msg)))))
+              (println "\t" (parse-format-message msg))))))
 
       (catch SocketException se
         (println "Exception:" (.getMessage se) "\nClosing..."))

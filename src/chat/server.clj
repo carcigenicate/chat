@@ -1,4 +1,4 @@
-(ns chat.testing.simple-server
+(ns chat.server
   (:require [helpers.net.helpers :as nh]
             [helpers.net.buffered-socket :as bs]
 
@@ -8,8 +8,7 @@
   (:import [java.net Socket SocketException]
            [helpers.net.buffered_socket BufferedSocket]))
 
-; TODO: Can recieve connections from clients, and recieve their names.
-; TODO: Test if Broadcasting and message listening is working
+; TODO: Generalize so it doesn't rely on console IO
 
 (def ^:const test-port 5555)
 
