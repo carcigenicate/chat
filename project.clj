@@ -5,8 +5,12 @@
                  [helpers "1"]
                  [org.clojure/core.async "0.3.443"]]
 
-  :main chat.main
+  :main chat.graphics-tests.first
 
-  :target-path "target/%s"
+  :aot [chat.graphics-tests.first chat.graphics-tests.button-client])
 
-  :profiles {:uberjar {:aot :all}})
+  ;:target-path "target/%s"
+
+  ;:resource-paths ["lib/jfxrt.jar"]
+
+  ;:profiles {:uberjar {:aot :all}})
