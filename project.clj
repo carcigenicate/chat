@@ -5,9 +5,9 @@
                  [helpers "1"]
                  [org.clojure/core.async "0.3.443"]]
 
-  :main chat.graphics-tests.first
+  :main chat.main
 
-  :aot [chat.graphics-tests.first chat.graphics-tests.button-client])
+  :aot :all)
 
   ;:target-path "target/%s"
 
