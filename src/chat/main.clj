@@ -1,7 +1,8 @@
 (ns chat.main
   (:require [helpers.general-helpers :as g]
             [chat.testing.simple-server :as ss]
-            [chat.testing.simple-client :as sc])
+            [chat.text-client :as tc]
+            [chat.graphic-client.main :as gc])
 
   (:gen-class))
 
@@ -14,11 +15,16 @@
          "When running as a server, the arguments should be \"s port\".\nWhen running as a client, the arguments should be \"c address port.")))
 
 (defn -main [& [mode address-or-port port?]]
-  (let [std-mode (Character/toLowerCase ^Character (first mode))]
-    (if-let [parsed-port (g/parse-int (or port? address-or-port))]
-      (case std-mode
-        \c (sc/connect address-or-port parsed-port)
-        \s (ss/start-server parsed-port server-message-check-delay)
-        (help mode))
+  (if (and mode address-or-port)
 
-      (println "Invalid port."))))
+    (let [std-mode (Character/toLowerCase ^Character (first mode))]
+      (if-let [parsed-port (g/parse-int (or port? address-or-port))]
+        (case std-mode
+          \c (tc/connect address-or-port parsed-port)
+          \s (ss/start-server parsed-port server-message-check-delay)
+          \g (gc/main)
+          (help mode))
+
+        (println "Invalid port.")))
+
+    (help mode)))

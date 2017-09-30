@@ -3,7 +3,7 @@
             [helpers.net.buffered-socket :as bs]
 
             [chat.testing.simple-server :as ss]
-            [chat.testing.helpers :as ch]
+            [chat.helpers :as ch]
 
             [clojure.core.async :refer [thread chan]]
             [chat.message :as m])

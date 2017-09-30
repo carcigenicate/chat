@@ -22,7 +22,6 @@
   (apply nh/queue-message msg-chan messages))
 
 (defn add-user! [^String username ^BufferedSocket b-sock]
-  (q "Recieved a connection to" username "from" (nh/pretty-address (:socket b-sock)) "\n")
   (swap! users! #(assoc % username b-sock)))
 
 (defn remove-connection! [^String username b-sock]
@@ -39,7 +38,6 @@
 (defn broadcast [message]
   (doseq [[u-name c-sock] @users!]
     (try
-      #_(q "Sending to" u-name "-" message)
       (bs/write c-sock message)
 
       (catch SocketException se
@@ -54,6 +52,8 @@
 (defn accept-handler [^Socket client]
   (let [b-sock (bs/new-buffered-socket client)
         username (bs/read-line b-sock)]
+
+    (q "Recieved a connection to" username "from" (nh/pretty-address (:socket b-sock)) "\n")
     (add-user! username b-sock)))
 
 (defn shutdown-server! [^Socket server-sock]

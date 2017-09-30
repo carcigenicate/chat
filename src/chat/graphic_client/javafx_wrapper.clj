@@ -1,10 +1,11 @@
-(ns chat.graphics-tests.javafx-wrapper
-  (:import (javafx.application Application Platform)
-           (javafx.event EventHandler)
-           (javafx.scene Parent)
-           (java.util List)
-           (javafx.collections ObservableList)
-           (javafx.embed.swing JFXPanel)))
+(ns chat.graphic-client.javafx-wrapper
+  (:import [javafx.application Application Platform]
+           [javafx.event EventHandler]
+           [javafx.scene Parent]
+           [java.util List]
+           [javafx.collections ObservableList]
+           [javafx.embed.swing JFXPanel]
+           [javafx.scene.control Button]))
 
 (defn initialize-swing
   "No idea why this is necessary, but it must be run before multiple javafx.scene.controls can be imported.
@@ -36,3 +37,9 @@
 
 (defn add-children [parent & children]
   (.addAll (get-children parent) children))
+
+(defn new-button ^Button [^String label, callback]
+  (let [^Button b (Button. "Send!")]
+    (.setOnAction b
+      (event-handler callback))
+    b))
