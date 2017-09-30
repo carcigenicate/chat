@@ -1,8 +1,7 @@
-(ns main
+(ns chat.main
   (:require [helpers.general-helpers :as g]
             [chat.testing.simple-server :as ss]
-            [chat.testing.simple-client :as sc]
-            [chat.graphics-tests.gen :as gt])
+            [chat.testing.simple-client :as sc])
 
   (:gen-class))
 

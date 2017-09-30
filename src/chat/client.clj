@@ -30,6 +30,9 @@
 (defn new-user [server-sock username]
   (->User server-sock username))
 
+(defn send-out [^String message]
+  (>!! outgoing-message-chan message))
+
 ; TODO: TEST! Make a simple button that sends, and print incoming.
 ; TODO: Make a third mode: Graphics client
 (defn connection-handler [server-sock]
