@@ -6,6 +6,4 @@
                  [org.clojure/core.async "0.3.443"]
                  [seesaw "1.4.5"]]
 
-  :main chat.main
-
-  :aot [chat.main chat.graphic-client.main])
+  :main chat.main)

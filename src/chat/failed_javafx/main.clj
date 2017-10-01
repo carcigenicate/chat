@@ -1,8 +1,8 @@
-(ns chat.graphic-client.main
+(ns chat.failed-javafx.main
 
   (:require [chat.client :as c]
-            [chat.graphic-client.guts :as gg]
-            [chat.graphic-client.javafx-wrapper :as jw])
+            [chat.failed-javafx.guts :as gg]
+            [chat.failed-javafx.javafx-wrapper :as jw])
 
   (:gen-class :extends javafx.application.Application))
 

@@ -1,7 +1,7 @@
-(ns chat.graphic-client.guts
+(ns chat.failed-javafx.guts
 
   (:require [chat.client :as c]
-            [chat.graphic-client.javafx-wrapper :as jw])
+            [chat.failed-javafx.javafx-wrapper :as jw])
 
   (:import [javafx.application Application Platform]
            [javafx.stage Stage]

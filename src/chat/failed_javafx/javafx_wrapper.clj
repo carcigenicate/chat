@@ -1,4 +1,4 @@
-(ns chat.graphic-client.javafx-wrapper
+(ns chat.failed-javafx.javafx-wrapper
   (:import [javafx.application Application Platform]
            [javafx.event EventHandler]
            [javafx.scene Parent]
