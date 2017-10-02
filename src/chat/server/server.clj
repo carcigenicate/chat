@@ -1,9 +1,9 @@
-(ns chat.server
+(ns chat.server.server
   (:require [helpers.net.helpers :as nh]
             [helpers.net.buffered-socket :as bs]
 
             [clojure.core.async :refer [>! <! thread go-loop chan]]
-            [chat.message :as m])
+            [chat.messages.message :as m])
 
   (:import [java.net Socket SocketException]
            [helpers.net.buffered_socket BufferedSocket]))
@@ -20,11 +20,11 @@
 (defn q [& messages]
   (apply nh/queue-message msg-chan messages))
 
-(defn add-user! [^String username ^BufferedSocket b-sock]
+(defn add-user! [^String username, ^BufferedSocket b-sock]
   (q "Recieved a connection to" username "from" (nh/pretty-address (:socket b-sock)) "\n")
   (swap! users! #(assoc % username b-sock)))
 
-(defn remove-connection! [^String username b-sock]
+(defn remove-connection! [^String username, b-sock]
   (swap! users! #(dissoc % username))
   (bs/close b-sock))
 
@@ -35,16 +35,23 @@
              (close-all! us)
              {}))))
 
-(defn broadcast [message]
-  (doseq [[u-name c-sock] @users!]
-    (try
-      #_(q "Sending to" u-name "-" message)
-      (bs/write c-sock message)
+(defmacro try-with-user [username, ^Socket user-sock, & body]
+  `(try
+     ~@body
 
-      (catch SocketException se
-        (do
-          (q "Exception for" u-name "-" (.getMessage se))
-          (remove-connection! u-name c-sock))))))
+     (catch SocketException se#
+       (do
+         (q "Exception for" ~username "-" (.getMessage se#))
+         (remove-connection! ~username ~user-sock)))))
+
+(defn broadcast [message]
+  (let [{:keys [sender-name sender-address]} message]
+    (doseq [[rcvr-name rcvr-sock] @users!]
+      (when-not (and (= sender-address (nh/pretty-address rcvr-sock))
+                     (= sender-name rcvr-name))
+
+        (try-with-user rcvr-name rcvr-sock
+          (bs/write rcvr-sock (m/server-message-to-outgoing message)))))))
 
 (defn broadcast-many [messages]
   (doseq [msg messages]
@@ -60,15 +67,18 @@
   (disconnect-all!)
   (.close server-sock))
 
-(defn to-messages [username raw-messages]
-  (mapv (partial m/new-message username) raw-messages))
+(defn to-messages [username, ^Socket sender-sock, raw-messages]
+  (let [addr (nh/pretty-address sender-sock)]
+    (mapv #(m/internal-message username addr %) raw-messages)))
 
 (defn check-users-for-messages []
   (reduce (fn [msgs [u-name c-sock]]
-            (if (bs/data-ready? c-sock)
-              (let [raw-msgs (bs/read-lines c-sock)]
-                (into msgs (to-messages u-name raw-msgs)))
-              msgs))
+            (try-with-user u-name c-sock
+              (if (bs/data-ready? c-sock)
+                (let [raw-msgs (bs/read-lines c-sock)]
+                  (into msgs (to-messages u-name c-sock raw-msgs)))
+
+                msgs)))
           []
           @users!))
 

@@ -2,11 +2,11 @@
   (:require [helpers.net.helpers :as nh]
             [helpers.net.buffered-socket :as bs]
 
-            [chat.testing.simple-server :as ss]
+            [chat.server.server :as ss]
             [chat.helpers :as ch]
 
             [clojure.core.async :refer [thread chan go >!! <! alts! timeout]]
-            [chat.message :as m])
+            [chat.messages.message :as m])
 
   (:import [java.net Socket SocketException]))
 

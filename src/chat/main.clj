@@ -1,6 +1,6 @@
 (ns chat.main
   (:require [helpers.general-helpers :as g]
-            [chat.testing.simple-server :as ss]
+            [chat.server.server :as ss]
             [chat.text-client :as tc]
             [chat.graphic-client.client :as gc])
 
