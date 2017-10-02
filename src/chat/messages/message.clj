@@ -21,3 +21,7 @@
         addr-str (if sender-address (str "(" sender-address ")") "")]
 
     (str sender addr-str ": " message-text)))
+
+(defn valid-message-text? [raw-message]
+  (and (>= (count raw-message) 2)
+       (not (every? #(Character/isWhitespace ^Character %) raw-message))))

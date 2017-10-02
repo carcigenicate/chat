@@ -3,7 +3,8 @@
             [helpers.net.buffered-socket :as bs]
 
             [clojure.core.async :refer [>! <! thread go-loop chan]]
-            [chat.messages.message :as m])
+            [chat.messages.message :as m]
+            [clojure.string :as s])
 
   (:import [java.net Socket SocketException]
            [helpers.net.buffered_socket BufferedSocket]))
@@ -54,6 +55,7 @@
       (when-not (and (= sender-address)
                      (= sender rcvr-name))
 
+        (q "Sending" message "to" rcvr-name)
         (try-with-user rcvr-name rcvr-sock
           (bs/write rcvr-sock (m/server-message-to-outgoing message)))))))
 
@@ -71,9 +73,23 @@
   (disconnect-all!)
   (.close server-sock))
 
+(defn process-message [raw-message-text]
+  (-> raw-message-text
+      (s/trim)
+      (s/replace "\r\n" "\n")
+      (s/replace "\n" "  ")))
+
+(defn pre-process-messages [raw-messages]
+  (for [m raw-messages
+        :let [proc (process-message m)]
+        :when (m/valid-message-text? proc)]
+    proc))
+
+; TODO: Getting expensive?
 (defn to-messages [username, ^BufferedSocket sender-sock, raw-messages]
-  (let [addr (client-address sender-sock)]
-    (mapv #(m/internal-message username addr %) raw-messages)))
+  (let [addr (client-address sender-sock)
+        proc-msgs (pre-process-messages raw-messages)]
+    (map #(m/internal-message username addr %) proc-msgs)))
 
 (defn check-users-for-messages []
   (reduce (fn [msgs [u-name c-sock]]

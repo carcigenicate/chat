@@ -1,16 +1,18 @@
 (ns chat.graphic-client.chat-frame
   (:require [seesaw.core :as sc]
             [clojure.core.async :refer [>!!]]
-            [chat.graphic-client.seesaw-helpers :as sh]))
+            [chat.graphic-client.seesaw-helpers :as sh]
+            [chat.graphic-client.general-widgets :as gw]))
 
-(def window-size [1000 :by 1000])
-(def send-panel-size [800 :by 500])
-(def message-panel-size (sh/map-dimensions #(int (/ % 3))
-                                           window-size))
+(def window-size [1200 :by 1200])
 
-(def message-font "Arial-30")
+(def message-font "Arial-40")
 (def compose-font message-font)
-(def send-font "Arial-20")
+(def send-font "Arial-30")
+(def alert-font "Arial-Bold-35")
+
+(defn alert-box []
+  (gw/alert-box :font alert-font))
 
 (defn message-box []
   (sc/scrollable
@@ -34,23 +36,17 @@
     :id :send-button))
 
 (defn send-panel []
-  (let [parent (sc/border-panel)
-        cps-box (compose-box)
-        send-btn (send-button)]
-
-    (sc/config! parent :center cps-box
-                       :south send-btn)
-
-    parent))
-
+  (sc/border-panel
+    :north (alert-box)
+    :center (compose-box)
+    :south (send-button)))
 
 (defn chat-frame []
-  (let [msg-box (message-box)
-        send-box (send-panel)
-        main-panel (sc/border-panel :center msg-box
-                                    :south send-box
-                                    :border 10
-                                    :hgap 5)]
+  (let [main-panel (sc/border-panel
+                     :center (message-box)
+                     :south (send-panel)
+                     :border 10
+                     :hgap 5)]
 
     (sc/frame :size window-size, :content main-panel,)))
 
