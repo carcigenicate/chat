@@ -15,3 +15,9 @@
 
 (defn parse-message [message]
   (edn/read-string message))
+
+(defn format-message [message]
+  (let [{:keys [sender sender-address message-text]} message
+        addr-str (if sender-address (str "(" sender-address ")") "")]
+
+    (str sender addr-str ": " message-text)))

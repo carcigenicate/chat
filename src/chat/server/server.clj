@@ -20,8 +20,11 @@
 (defn q [& messages]
   (apply nh/queue-message msg-chan messages))
 
+(defn client-address [^BufferedSocket b-sock]
+  (nh/pretty-address (:socket b-sock)))
+
 (defn add-user! [^String username, ^BufferedSocket b-sock]
-  (q "Recieved a connection to" username "from" (nh/pretty-address (:socket b-sock)) "\n")
+  (q "Recieved a connection to" username "from" (client-address b-sock)) "\n"
   (swap! users! #(assoc % username b-sock)))
 
 (defn remove-connection! [^String username, b-sock]
@@ -45,10 +48,11 @@
          (remove-connection! ~username ~user-sock)))))
 
 (defn broadcast [message]
-  (let [{:keys [sender-name sender-address]} message]
-    (doseq [[rcvr-name rcvr-sock] @users!]
-      (when-not (and (= sender-address (nh/pretty-address rcvr-sock))
-                     (= sender-name rcvr-name))
+  (let [{:keys [sender sender-address]} message]
+    (doseq [[rcvr-name rcvr-sock] @users!
+            :let [rcvr-addr (client-address rcvr-sock)]]
+      (when-not (and (= sender-address)
+                     (= sender rcvr-name))
 
         (try-with-user rcvr-name rcvr-sock
           (bs/write rcvr-sock (m/server-message-to-outgoing message)))))))
@@ -67,8 +71,8 @@
   (disconnect-all!)
   (.close server-sock))
 
-(defn to-messages [username, ^Socket sender-sock, raw-messages]
-  (let [addr (nh/pretty-address sender-sock)]
+(defn to-messages [username, ^BufferedSocket sender-sock, raw-messages]
+  (let [addr (client-address sender-sock)]
     (mapv #(m/internal-message username addr %) raw-messages)))
 
 (defn check-users-for-messages []
@@ -92,13 +96,20 @@
         (Thread/sleep check-delay)
         (recur)))))
 
+(defn add-shutdown-hook []
+  (.addShutdownHook (Runtime/getRuntime)
+    (Thread. ^Runnable
+             (fn []
+               (disconnect-all!)
+               (println "Shutdown run!")))))
+
 (defn start-server [port check-delay]
   (start-message-listener check-delay)
   (println "Starting server...")
 
+  (add-shutdown-hook)
+
   (nh/start-async-server port accept-handler
                          #(do
                             (q (.getMessage ^Exception %2))
-                            (shutdown-server! %)))
-
-  (q "Server Closed."))
+                            (shutdown-server! %))))
