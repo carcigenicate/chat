@@ -2,7 +2,7 @@
   (:require [helpers.general-helpers :as g]
             [chat.testing.simple-server :as ss]
             [chat.text-client :as tc]
-            [chat.graphic-client.main :as gc])
+            [chat.graphic-client.client :as gc])
 
   (:gen-class))
 
@@ -22,7 +22,7 @@
         (case std-mode
           \c (tc/connect address-or-port parsed-port)
           \s (ss/start-server parsed-port server-message-check-delay)
-          \g (gc/main)
+          \g (gc/-main)
           (help mode))
 
         (println "Invalid port.")))

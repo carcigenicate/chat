@@ -39,6 +39,9 @@
 (defn stop [client]
   (reset! (:running?! client) false))
 
+(defn write [^Client client message]
+  (>!! (:outgoing-chan client) message))
+
 ; TODO: TEST! Make a simple button that sends, and print incoming.
 ; TODO: Make a third mode: Graphics client
 (defn connection-handler [username server-sock]

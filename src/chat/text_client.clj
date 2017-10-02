@@ -17,7 +17,6 @@
 (defn connect [address port]
   (let [username (get-username)
         client (c/connect username address port)]
-    (println "Client created...")
 
     (start-incoming-handler client)
 
