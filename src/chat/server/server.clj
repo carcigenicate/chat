@@ -97,7 +97,6 @@
               (if (bs/data-ready? c-sock)
                 (let [raw-msgs (bs/read-lines c-sock)]
                   (into msgs (to-messages u-name c-sock raw-msgs)))
-
                 msgs)))
           []
           @users!))

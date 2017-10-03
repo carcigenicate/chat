@@ -59,7 +59,7 @@
 
       (alert @chat-frame "Invalid Message."))))
 
-(defn start-handler []
+(defn start-incoming-message-handler []
   (let [{:keys [incoming-chan]} @client!]
     (go
       (while (and @client! @(:running?! @client!))
@@ -89,7 +89,8 @@
             (sh/switch-active-frame-to @connect-frame @chat-frame)
             (sc/request-focus! @chat-frame)
             (setup-send-listener)
-            (start-handler)))
+            (start-incoming-message-handler)
+            (sc/config! @chat-frame :title username)))
 
         (catch SocketException se
           (alert @connect-frame (.getMessage se)))))
